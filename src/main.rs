@@ -1,4 +1,3 @@
-use ndarray::array;
     
 mod object;
 
@@ -16,10 +15,13 @@ fn main() {
     let width = (0.10 * c) as u64;
     let hight = (0.10 * c) as u64;
 
-    let h = 100;
+    let h = 10_000;
 
     //create a new object 
     let mut block = Object::new(position, [length, width, hight], h);
 
+    let filename = String::from("block");
+
+    let _ = block.write(filename);
 
 }

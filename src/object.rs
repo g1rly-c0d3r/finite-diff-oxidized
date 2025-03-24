@@ -1,4 +1,7 @@
 use ndarray::{prelude::*, Array3};
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
 
 // what we are simulating
 pub struct Object {
@@ -29,6 +32,26 @@ impl Object {
         let object = Array3::<f64>::default( (z_dim as usize, y_dim as usize, x_dim as usize).f());
         
         Object{ h, position, lengths: size, object }
+    }
+
+    pub fn write(&self, filename: String) -> std::io::Result<()>{
+        let filename_ext = filename + ".txt";
+        let path_to_file = Path::new( &filename_ext );
+
+        let mut file = File::create(&path_to_file)?; 
+
+        for x in self.object.outer_iter() {
+            for y in x.outer_iter(){
+                for z in y.outer_iter(){
+                   //println!("{:.2?} ", z[[]]);
+                   file.write( &z[[]].to_string().as_bytes() )?;  
+                   file.write( " ".as_bytes() )?;
+                }
+                file.write("\n".as_bytes())?;
+            }
+            file.write("\n".as_bytes())?;
+        }
+     Ok(())       
     }
 }
 
