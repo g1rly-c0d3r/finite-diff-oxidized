@@ -10,7 +10,7 @@ pub struct Object {
     // physically represents voxel size in microns
     h: u64,
     // Thermal conductivity of the object, in W/m/K
-    K: f64,
+    k: f64,
     //the 0'th point in the x,y, and z range
     position: [f64; 3],
     //the "size" of the object, in microns, or whatever units h is in
@@ -22,7 +22,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(position: [f64; 3], size: [u64; 3], h:u64) -> Object{
+    pub fn new(position: [f64; 3], size: [u64; 3], h:u64, temperature: f64, k: f64) -> Object{
         if h < 1 {
             panic!("Discretization can not be finer than 1 um");
         }
@@ -31,9 +31,9 @@ impl Object {
         let y_dim = size[1] / h;
         let z_dim = size[2] / h;
 
-        let object = Array3::<f64>::default( (z_dim as usize, y_dim as usize, x_dim as usize).f());
+        let object = Array3::<f64>::from_elem( (z_dim as usize, y_dim as usize, x_dim as usize).f(), temperature);
         
-        Object{ h, K: 0.0, position, lengths: size, object }
+        Object{ h, k, position, lengths: size, object }
     }
 
     pub fn write(&self, filename: String) -> std::io::Result<()>{
@@ -56,11 +56,6 @@ impl Object {
      Ok(())       
     }
 
-    pub fn initialize(&self, temperature: f64, K: f64) -> std::io::Result<()>{
-        self.K = K;
-        
-        Ok(())
-    }
 
 }
 

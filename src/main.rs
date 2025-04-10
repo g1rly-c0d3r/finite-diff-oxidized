@@ -15,16 +15,14 @@ fn main() {
     let hight = (0.10 * c) as u64;
 
     let h = 10_000;
+    let temperature = 20.0; // degrees C
+    let k = 237.0;
 
     //create a new object 
-    let mut block = Object::new(position, [length, width, hight], h);
-
     // a block of aluminum at room temp
-    // thermal conductivity units: M/m/K
-    if let Err(msg) = block.initialize(20.0, 237.0){
-        panic!("Error initializing object: {msg:?}");
-    }
-    
+    // thermal conductivity:K = 237 W/m/K
+    let mut block = Object::new(position, [length, width, hight], h, temperature, k);
+
 
     let filename = String::from("block");
 
