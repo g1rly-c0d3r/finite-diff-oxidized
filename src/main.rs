@@ -1,7 +1,6 @@
     
 mod object;
 
-
 use object::Object;
 
 fn main() {
@@ -20,8 +19,19 @@ fn main() {
     //create a new object 
     let mut block = Object::new(position, [length, width, hight], h);
 
+    // a block of aluminum at room temp
+    // thermal conductivity units: M/m/K
+    if let Err(msg) = block.initialize(20.0, 237.0){
+        panic!("Error initializing object: {msg:?}");
+    }
+    
+
     let filename = String::from("block");
 
-    let _ = block.write(filename);
+    if let Err(msg) = block.write(filename) {
+      panic!("Error printing object to file: {msg:?}")
+    }
+
+    
 
 }

@@ -9,6 +9,8 @@ pub struct Object {
     // must be a positive integer
     // physically represents voxel size in microns
     h: u64,
+    // Thermal conductivity of the object, in W/m/K
+    K: f64,
     //the 0'th point in the x,y, and z range
     position: [f64; 3],
     //the "size" of the object, in microns, or whatever units h is in
@@ -31,7 +33,7 @@ impl Object {
 
         let object = Array3::<f64>::default( (z_dim as usize, y_dim as usize, x_dim as usize).f());
         
-        Object{ h, position, lengths: size, object }
+        Object{ h, K: 0.0, position, lengths: size, object }
     }
 
     pub fn write(&self, filename: String) -> std::io::Result<()>{
@@ -53,6 +55,13 @@ impl Object {
         }
      Ok(())       
     }
+
+    pub fn initialize(&self, temperature: f64, K: f64) -> std::io::Result<()>{
+        self.K = K;
+        
+        Ok(())
+    }
+
 }
 
 
