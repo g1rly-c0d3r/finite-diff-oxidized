@@ -30,6 +30,8 @@ fn main() {
       panic!("Error printing object to file: {msg:?}")
     }
 
-    
+    // the first argument is the time interval, and the second is the ambient temperature
+    // tamb is constant for now
+    block.compute_dt(1.0e-6, 20.0);
 
 }
