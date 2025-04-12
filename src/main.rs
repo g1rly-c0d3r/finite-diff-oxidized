@@ -19,7 +19,7 @@ fn main() {
     let width = (0.10 * c) as u64;
     let hight = (0.10 * c) as u64;
 
-    let h = 10_000;
+    let h = 1_000;
     let temperature = 20.0; // degrees C
     let k = 237.0;
 
@@ -32,28 +32,30 @@ fn main() {
     let finish = start.elapsed();
     println!("done\nTook {finish:?}");
 
-
-    let filename = String::from("output/block_0.000000000");
-
-    if let Err(msg) = block.write(filename) {
-      panic!("Error printing object to file: {msg:?}")
-    }
-
     // the first argument is the time interval, and the second is the ambient temperature
     // tamb is constant for now
     let ambient_temp = 0.0;
     let ttotal: f64 = 100.0;
-    let N = 100;
+    let N = 1_000;
     let dt = ttotal/(N as f64);
-    let print_times: Vec<f64> = (1..=10).map(|x| x as f64 * 10.0).collect();
+    let print_times: Vec<f64> = (1..=10).map(|x| x as f64 * 100.0).collect();
+
+    let filename = String::from("output/block_0.000000000");
+
+    //print!("Writing initial object to file ... ");
+    //io::stdout().flush();
+    //if let Err(msg) = block.write(filename) {
+    //  panic!("Error printing object to file: {msg:?}")
+    //}
+    //println!("done.");
 
 
     for i in 1..=N {
-        print!("\n+++++++++++++++++++++++++++++++++++++++++++++++\nComputing timestep {i} ({0:.9} s) ...", i as f64*dt);
+        print!("\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\nComputing timestep {i} ({0:.9} s) ... ", i as f64*dt);
         let start = Instant::now();
         block.compute_dt(dt, ambient_temp);
         let elapsed = start.elapsed();
-        println!("done.\nTook {:?}.", elapsed);
+        println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
 
         if print_times.contains(&(i as f64*dt)){
             print!("Printing object to file ... ");
@@ -69,7 +71,7 @@ fn main() {
             let print_time = print_start.elapsed();
             println!("done\nTook {print_time:?}.");
         }
-        println!("-----------------------------------------------");
+        println!("-------------------------------------------------------");
     }
 
     let proc_ttol = proc_start.elapsed();
