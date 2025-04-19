@@ -1,13 +1,31 @@
 use std::time::Instant;
 use std::io;
 use std::io::prelude::*;
+
+use std::path::PathBuf;
+use clap::{Parser, ArgAction};
     
 mod object;
 
 use object::Object;
 
+#[derive(Parser)]
+struct Cli {
+        /// Path to the YAML configuration file
+        config_file: PathBuf,
+
+        /// Number of threads, 
+        #[arg(short, long, default_value_t = 1)]
+        threads: u8,
+
+        /// Quiet output
+        #[arg(short, long)]
+        quiet: bool,
+}
+
 fn main() {
-    print_init();
+    let argv = Cli::parse();
+    print_init(argv.config_file);
     let proc_start = Instant::now();
     // convert m to um
     let c = 1e6;
@@ -23,14 +41,19 @@ fn main() {
     let temperature = 20.0; // degrees C
     let k = 237.0;
 
-    print!("Building the object... ");
+    if !argv.quiet {
+        print!("Building the object... ");
+    };
+
     //create a new object 
     // a block of aluminum at room temp
     // thermal conductivity:K = 237 W/m/K
     let start = Instant::now();
     let mut block = Object::new(position, [length, width, hight], h, temperature, k);
     let finish = start.elapsed();
-    println!("done\nTook {finish:?}");
+    if !argv.quiet {
+        println!("done\nTook {finish:?}");
+    }
 
     // the first argument is the time interval, and the second is the ambient temperature
     // tamb is constant for now
@@ -51,15 +74,22 @@ fn main() {
 
 
     for i in 1..=N {
-        print!("\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\nComputing timestep {i} ({0:.9} s) ... ", i as f64*dt);
+        if !argv.quiet {
+            print!("\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\nComputing timestep {i} ({0:.9} s) ... ", i as f64*dt);
+        }
         let start = Instant::now();
         block.compute_dt(dt, ambient_temp);
         let elapsed = start.elapsed();
-        println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
+
+        if !argv.quiet {
+            println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
+        };
 
         if print_times.contains(&(i as f64*dt)){
-            print!("Printing object to file ... ");
-            io::stdout().flush();
+            if !argv.quiet {
+                print!("Printing object to file ... ");
+                let _ = io::stdout().flush();
+            }
             let print_start = Instant::now();
             let mut filename = String::from("output/block_" );
             filename.push_str( &( format!("{:.9}", (i as f64*dt)) ));
@@ -69,15 +99,20 @@ fn main() {
               panic!("Error printing object to file: {msg:?}")
             }
             let print_time = print_start.elapsed();
-            println!("done\nTook {print_time:?}.");
+            if !argv.quiet {
+                println!("done\nTook {print_time:?}.");
+            }
         }
-        println!("-------------------------------------------------------");
+        if !argv.quiet {
+            println!("-------------------------------------------------------");
+        }
     }
 
     let proc_ttol = proc_start.elapsed();
     print!("\nFinishing up.\nTotal elaped time: {proc_ttol:?}\n");
 }
 
-fn print_init(){
+fn print_init(config: PathBuf){
     print!("\nFinite Difference Oxidized. \nA simple numerical solver for the heat equation.\n\n");
+    println!("Parsing Config file: {}\n", config.display());
 }
