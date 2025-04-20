@@ -10,6 +10,11 @@ mod object;
 use object::Object;
 
 #[derive(Parser)]
+#[command(
+    version,
+    about,
+    long_about = "A finite-difference solver of the 3-D heat equation written in rust."
+)]
 struct Cli {
     /// Path to the YAML configuration file
     config_file: PathBuf,
@@ -38,7 +43,7 @@ fn main() {
     let width = (0.10 * c) as u64;
     let hight = (0.10 * c) as u64;
 
-    let h = 10_000;
+    let h = 1_000;
     let temperature = 20.0; // degrees C
     let k = 237.0;
 
