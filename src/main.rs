@@ -5,6 +5,11 @@ use std::time::Instant;
 use clap::Parser;
 use std::path::PathBuf;
 
+extern crate yaml_rust;
+
+use yaml_rust::YamlLoader;
+
+
 mod object;
 
 use object::Object;
@@ -29,9 +34,46 @@ struct Cli {
 }
 
 #[allow(non_snake_case)]
+struct Config {
+    ambient_temp: f64,
+    
+    //largest and smallest timesteps
+    max_delta_t: f64,
+    min_delta_t: f64,
+
+    //largest tempchange for a given timestep
+    // panic!'s if tempchange is too large for min timestep
+    max_delta_T: f64,
+
+    // total simulation time in seconds
+    sim_time: f64,
+
+    // times to plot the temperature
+    plot_times: Vec<f64>,
+}
+
+
+#[allow(non_snake_case)]
 fn main() {
     let argv = Cli::parse();
-    print_init(argv.config_file);
+    
+    print_init();
+
+    if !argv.quiet {
+        print!("Parsing config file: {} ... ", &argv.config_file.display());
+        let _ = io::stdout().flush();
+    }
+
+    let sim_config = match parse_config(argv.config_file) {
+        Ok(config) => {
+            println!("finished.");
+            config
+        },
+
+        Err(msg) => panic!("Error Parsing Config File: {:?}", msg),
+    };
+
+
     let proc_start = Instant::now();
     // convert m to um
     let c = 1e6;
@@ -71,12 +113,6 @@ fn main() {
 
     let filename = String::from("output/block_0.000000000");
 
-    //print!("Writing initial object to file ... ");
-    //io::stdout().flush();
-    //if let Err(msg) = block.write(filename) {
-    //  panic!("Error printing object to file: {msg:?}")
-    //}
-    //println!("done.");
 
     for i in 1..=N {
         if !argv.quiet {
@@ -116,7 +152,25 @@ fn main() {
     print!("\nFinishing up.\nTotal elaped time: {proc_ttol:?}\n");
 }
 
-fn print_init(config: PathBuf) {
+fn print_init() {
     print!("\nFinite Difference Oxidized. \nA simple numerical solver for the heat equation.\n\n");
-    println!("Parsing Config file: {}\n", config.display());
+}
+
+#[allow(non_snake_case)]
+fn parse_config(config_file: PathBuf) -> std::result::Result<Config, String> {
+    let mut file_handle = File::open(config_file)?;
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents);
+
+    let docs = Yamloader::load_from_str(&contents)?;
+
+    let t_amb = docs[0]["ambient_temp"];
+    let dt_max = docs[0]["max_timestep"];
+    let dt_min = docs[0]["min_timestep"];
+    let dT_max = docs[0]["max_step_tempchange"];
+
+
+
+
 }
