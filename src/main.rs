@@ -158,19 +158,50 @@ fn print_init() {
 
 #[allow(non_snake_case)]
 fn parse_config(config_file: PathBuf) -> std::result::Result<Config, String> {
-    let mut file_handle = File::open(config_file)?;
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents);
-
-    let docs = Yamloader::load_from_str(&contents)?;
-
-    let t_amb = docs[0]["ambient_temp"];
-    let dt_max = docs[0]["max_timestep"];
-    let dt_min = docs[0]["min_timestep"];
-    let dT_max = docs[0]["max_step_tempchange"];
+    let contents = match std::fs::read_to_string(config_file){
+        Ok(conts) => conts.to_string(),
+        Err(msg) => return Err(msg.to_string()),
+    };
 
 
+    let docs = match YamlLoader::load_from_str(&contents){
+        Ok(yaml) => yaml,
+        Err(msg) => return Err(msg.to_string()),
+    };
 
+    let ambient_temp: f64 = docs[0]["ambient_temp"];
+    let max_delta_t: f64 = docs[0]["max_timestep"];
+    let min_delta_t: f64 = docs[0]["min_timestep"];
+    let max_delta_T: f64 = docs[0]["max_step_tempchange"];
 
+    let mut sim_time: f64 = 0.0;
+    let mut plot_times = Vec::<f64>::new();
+
+    for (i, item) in docs[1].into_iter().enumerate() {
+        if item == "plot" {
+            plot_times.push(sim_time);
+        }
+        else if item == "wait" {
+            sim_time += docs[1][i][item];
+        }
+        else{
+            return Err(String::from("invalid key in control script"));
+        }
+    }
+    Ok(
+        Config{ 
+            ambient_temp,
+            max_delta_t,
+            min_delta_t,
+            max_delta_T,
+            sim_time,
+            plot_times,
+        } )
 }
+
+
+
+
+
+
+
