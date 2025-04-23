@@ -46,7 +46,7 @@ impl Object {
         }
     }
 
-    pub fn compute_dt(&mut self, timestep: f64, ambient_temperature: f64) {
+    pub fn compute_dt(&mut self, timestep: f64, ambient_temperature: f64) -> f64 {
         //SMUT (my wife
         //thinks &mut
         //looks like smut)
@@ -56,6 +56,7 @@ impl Object {
         // The book i am using uses u and v for the analytic solution and numerical approximation,
         // respectively.
 
+        let mut largest_dtemp = 0.0;
         // iterate over each voxel in the object
         for i in 0..self.object.shape()[0] {
             for j in 0..self.object.shape()[1] {
@@ -119,10 +120,16 @@ impl Object {
                     // The multiplicitive scalars are the time step correction and the thermal
                     // parameters of the object (density, specific heat, thermal conductivity, etc.).
 
-                    self.object[[i, j, k]] += (self.k * self.k) * timestep * (v_x + v_y + v_z);
+                    let tempchange = (self.k * self.k) * timestep * (v_x + v_y + v_z);
+                    if tempchange > largest_dtemp {
+                        largest_dtemp = tempchange;
+                    }
+                    self.object[[i, j, k]] += tempchange;
                 }
             }
         }
+
+        largest_dtemp
     }
 
     pub fn write(&self, filename: String) -> std::io::Result<()> {
