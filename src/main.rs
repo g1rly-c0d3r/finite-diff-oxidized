@@ -85,7 +85,7 @@ fn main() {
     let width = (0.10 * c) as u64;
     let hight = (0.10 * c) as u64;
 
-    let h = 10_000;
+    let h = 1_000;
     let temperature = 20.0; // degrees C
     let k = 237.0;
 
@@ -127,7 +127,7 @@ fn main() {
             if dt < sim_config.min_delta_t {
                 panic!("Maximum temperature change not achiveable with minumum timestep");
             }
-            dt -= dt / 0.1;
+            dt -= dt * 0.1;
             continue;
         }
 
@@ -136,8 +136,8 @@ fn main() {
             println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
         };
 
-        /// TODO: make sure all of the print_times get printed
-        /// (using iter's and curr_time +/- dt
+        // TODO: make sure all of the print_times get printed
+        // (using iter's and curr_time +/- dt
         if print_times.contains(&curr_time)   {
             if !argv.quiet {
                 print!("Printing object to file ... ");
@@ -157,6 +157,10 @@ fn main() {
         }
         if !argv.quiet {
             println!("-------------------------------------------------------");
+        }
+        dt += dt * 0.1;
+        if dt > sim_config.max_delta_t {
+            dt = sim_config.max_delta_t;
         }
         curr_time += dt;
     }
