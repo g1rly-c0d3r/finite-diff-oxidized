@@ -85,7 +85,7 @@ fn main() {
     let width = (0.10 * c) as u64;
     let hight = (0.10 * c) as u64;
 
-    let h = 1_000;
+    let h = 10_000;
     let temperature = 20.0; // degrees C
     let k = 237.0;
 
@@ -136,7 +136,9 @@ fn main() {
             println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
         };
 
-        if print_times.contains(&curr_time) {
+        /// TODO: make sure all of the print_times get printed
+        /// (using iter's and curr_time +/- dt
+        if print_times.contains(&curr_time)   {
             if !argv.quiet {
                 print!("Printing object to file ... ");
                 let _ = io::stdout().flush();
