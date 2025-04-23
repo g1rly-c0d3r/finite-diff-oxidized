@@ -71,7 +71,6 @@ fn main() {
 
         Err(msg) => panic!("Error Parsing Config File: {:?}", msg),
     };
-    println!("{sim_config:?}");
 
 
     let proc_start = Instant::now();
@@ -136,6 +135,12 @@ fn main() {
             println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
         };
 
+        dt += dt * 0.1;
+        if dt > sim_config.max_delta_t {
+            dt = sim_config.max_delta_t;
+        }
+        curr_time += dt;
+
         // TODO: make sure all of the print_times get printed
         // (using iter's and curr_time +/- dt
         if print_times.contains(&curr_time)   {
@@ -158,11 +163,6 @@ fn main() {
         if !argv.quiet {
             println!("-------------------------------------------------------");
         }
-        dt += dt * 0.1;
-        if dt > sim_config.max_delta_t {
-            dt = sim_config.max_delta_t;
-        }
-        curr_time += dt;
     }
 
     let proc_ttol = proc_start.elapsed();

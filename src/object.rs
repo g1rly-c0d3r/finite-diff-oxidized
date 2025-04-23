@@ -121,8 +121,8 @@ impl Object {
                     // parameters of the object (density, specific heat, thermal conductivity, etc.).
 
                     let tempchange = (self.k * self.k) * timestep * (v_x + v_y + v_z);
-                    if tempchange > largest_dtemp {
-                        largest_dtemp = tempchange;
+                    if tempchange.abs()> largest_dtemp {
+                        largest_dtemp = tempchange.abs();
                     }
                     self.object[[i, j, k]] += tempchange;
                 }
