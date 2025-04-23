@@ -1,0 +1,18 @@
+ambient_temp      : 20.0 #Degrees C
+
+max_timestep      : 0.1 #s
+min_timestep      : 1e-6 #s
+max_step_tempchange: 0.01
+
+
+---
+
+- plot
+
+- wait : 50.0 #s
+
+- plot
+
+- wait : 50.0
+
+- plot

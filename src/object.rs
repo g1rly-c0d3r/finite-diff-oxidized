@@ -1,4 +1,5 @@
-use ndarray::{prelude::*, Array3};
+use ndarray::prelude::*;
+use ndarray::Array3;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -63,55 +64,55 @@ impl Object {
                     // Bounds checked so that the "outside" of the object is treated as a sink.
                     let v_x = match i {
                         0 => {
-                            (ambient_temperature - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i + 1, j, k]])
-                                / (self.h * self.h) as f64
+                            (ambient_temperature - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i + 1, j, k]]) /
+                                (self.h * self.h) as f64
                         }
                         xmax if xmax == self.object.shape()[0] - 1 => {
-                            (ambient_temperature - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i - 1, j, k]])
-                                / (self.h * self.h) as f64
+                            (ambient_temperature - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i - 1, j, k]]) /
+                                (self.h * self.h) as f64
                         }
                         _ => {
-                            (self.object[[i + 1, j, k]] - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i - 1, j, k]])
-                                / (self.h * self.h) as f64
+                            (self.object[[i + 1, j, k]] - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i - 1, j, k]]) /
+                                (self.h * self.h) as f64
                         }
                     };
 
                     let v_y = match j {
                         0 => {
-                            (ambient_temperature - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i, j + 1, k]])
-                                / (self.h * self.h) as f64
+                            (ambient_temperature - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i, j + 1, k]]) /
+                                (self.h * self.h) as f64
                         }
                         ymax if ymax == self.object.shape()[1] - 1 => {
-                            (ambient_temperature - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i, j - 1, k]])
-                                / (self.h * self.h) as f64
+                            (ambient_temperature - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i, j - 1, k]]) /
+                                (self.h * self.h) as f64
                         }
                         _ => {
-                            (self.object[[i, j + 1, k]] - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i, j - 1, k]])
-                                / (self.h * self.h) as f64
+                            (self.object[[i, j + 1, k]] - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i, j - 1, k]]) /
+                                (self.h * self.h) as f64
                         }
                     };
 
                     let v_z = match k {
                         0 => {
-                            (ambient_temperature - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i, j, k + 1]])
-                                / (self.h * self.h) as f64
+                            (ambient_temperature - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i, j, k + 1]]) /
+                                (self.h * self.h) as f64
                         }
                         zmax if zmax == self.object.shape()[2] - 1 => {
-                            (ambient_temperature - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i, j, k - 1]])
-                                / (self.h * self.h) as f64
+                            (ambient_temperature - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i, j, k - 1]]) /
+                                (self.h * self.h) as f64
                         }
                         _ => {
-                            (self.object[[i, j, k - 1]] - 2.0 * self.object[[i, j, k]]
-                                + self.object[[i, j, k - 1]])
-                                / (self.h * self.h) as f64
+                            (self.object[[i, j, k - 1]] - 2.0 * self.object[[i, j, k]] +
+                                 self.object[[i, j, k - 1]]) /
+                                (self.h * self.h) as f64
                         }
                     };
 

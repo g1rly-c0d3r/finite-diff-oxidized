@@ -8,18 +8,16 @@ use std::path::PathBuf;
 extern crate yaml_rust;
 
 use yaml_rust::YamlLoader;
-
+use yaml_rust::Yaml::*;
+use std::string::String;
 
 mod object;
 
 use object::Object;
 
 #[derive(Parser)]
-#[command(
-    version,
-    about,
-    long_about = "A finite-difference solver of the 3-D heat equation written in rust."
-)]
+#[command(version, about,
+          long_about = "A finite-difference solver of the 3-D heat equation written in rust.")]
 struct Cli {
     /// Path to the YAML configuration file
     config_file: PathBuf,
@@ -34,9 +32,10 @@ struct Cli {
 }
 
 #[allow(non_snake_case)]
+#[derive(Debug)]
 struct Config {
     ambient_temp: f64,
-    
+
     //largest and smallest timesteps
     max_delta_t: f64,
     min_delta_t: f64,
@@ -56,7 +55,7 @@ struct Config {
 #[allow(non_snake_case)]
 fn main() {
     let argv = Cli::parse();
-    
+
     print_init();
 
     if !argv.quiet {
@@ -68,10 +67,11 @@ fn main() {
         Ok(config) => {
             println!("finished.");
             config
-        },
+        }
 
         Err(msg) => panic!("Error Parsing Config File: {:?}", msg),
     };
+    println!("{sim_config:?}");
 
 
     let proc_start = Instant::now();
@@ -105,35 +105,45 @@ fn main() {
 
     // the first argument is the time interval, and the second is the ambient temperature
     // tamb is constant for now
-    let ambient_temp = 0.0;
-    let ttotal: f64 = 100.0;
-    let N = 1_000;
-    let dt = ttotal / (N as f64);
-    let print_times: Vec<f64> = (1..=10).map(|x| x as f64 * 100.0).collect();
+    let ambient_temp = sim_config.ambient_temp;
+    let ttotal: f64 = sim_config.sim_time;
+    let mut dt = (sim_config.max_delta_t - sim_config.min_delta_t) / 2.0;
 
-    let filename = String::from("output/block_0.000000000");
+    let print_times: Vec<f64> = sim_config.plot_times;
 
-
-    for i in 1..=N {
+    let mut curr_time: f64 = 0.0;
+    while curr_time < sim_config.sim_time {
         if !argv.quiet {
-            print!("\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\nComputing timestep {i} ({0:.9} s) ... ", i as f64*dt);
+            print!(
+                "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\nTime step, dt = {0:.9} s ... ",
+                curr_time
+            );
         }
         let start = Instant::now();
-        block.compute_dt(dt, ambient_temp);
+        let largest_tempchange = block.compute_dt(dt, ambient_temp);
         let elapsed = start.elapsed();
+
+        if largest_tempchange == sim_config.max_delta_T {
+            if dt < sim_config.min_delta_t {
+                panic!("Maximum temperature change not achiveable with minumum timestep");
+            }
+            dt -= dt / 0.1;
+            continue;
+        }
+
 
         if !argv.quiet {
             println!("done.\ndt = {dt} s\nTook {:?}.", elapsed);
         };
 
-        if print_times.contains(&(i as f64 * dt)) {
+        if print_times.contains(&curr_time) {
             if !argv.quiet {
                 print!("Printing object to file ... ");
                 let _ = io::stdout().flush();
             }
             let print_start = Instant::now();
             let mut filename = String::from("output/block_");
-            filename.push_str(&(format!("{:.9}", (i as f64 * dt))));
+            filename.push_str(&(format!("{:.9}", curr_time)));
 
             if let Err(msg) = block.write(filename) {
                 panic!("Error printing object to file: {msg:?}")
@@ -146,6 +156,7 @@ fn main() {
         if !argv.quiet {
             println!("-------------------------------------------------------");
         }
+        curr_time += dt;
     }
 
     let proc_ttol = proc_start.elapsed();
@@ -158,50 +169,100 @@ fn print_init() {
 
 #[allow(non_snake_case)]
 fn parse_config(config_file: PathBuf) -> std::result::Result<Config, String> {
-    let contents = match std::fs::read_to_string(config_file){
+    let contents = match std::fs::read_to_string(config_file) {
         Ok(conts) => conts.to_string(),
         Err(msg) => return Err(msg.to_string()),
     };
 
 
-    let docs = match YamlLoader::load_from_str(&contents){
+    let docs = match YamlLoader::load_from_str(&contents) {
         Ok(yaml) => yaml,
         Err(msg) => return Err(msg.to_string()),
     };
 
-    let ambient_temp: f64 = docs[0]["ambient_temp"];
-    let max_delta_t: f64 = docs[0]["max_timestep"];
-    let min_delta_t: f64 = docs[0]["min_timestep"];
-    let max_delta_T: f64 = docs[0]["max_step_tempchange"];
+    let ambient_temp: f64 = docs[0]["ambient_temp"].as_f64().ok_or(
+        "ambient_temp not valid",
+    )?;
+    let max_delta_t: f64 = docs[0]["max_timestep"].as_f64().ok_or(
+        "max timstep not valid",
+    )?;
+    let min_delta_t: f64 = docs[0]["min_timestep"].as_f64().ok_or(
+        "min timestep not valid",
+    )?;
+    let max_delta_T: f64 = docs[0]["max_step_tempchange"].as_f64().ok_or(
+        "max tempchange not valid",
+    )?;
 
     let mut sim_time: f64 = 0.0;
     let mut plot_times = Vec::<f64>::new();
 
-    for (i, item) in docs[1].into_iter().enumerate() {
-        if item == "plot" {
-            plot_times.push(sim_time);
-        }
-        else if item == "wait" {
-            sim_time += docs[1][i][item];
-        }
-        else{
-            return Err(String::from("invalid key in control script"));
+    for (i, item) in docs[1].clone().into_iter().enumerate() {
+        match item {
+            Real(num) => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: {num}"),
+                ))
+            }
+            Integer(num) => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: {num}"),
+                ))
+            }
+            String(string) => {
+                if string == "plot" {
+                    plot_times.push(sim_time);
+                } else {
+                    return Err(String::from(
+                        format!("Not a valid control key at {i}: {string:?}"),
+                    ));
+                }
+            }
+
+            Boolean(tf) => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: {tf:?}"),
+                ))
+            }
+            Array(arr) => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: {arr:?}"),
+                ))
+            }
+            Hash(ref hash) => {
+                if hash.keys().nth(0).unwrap().as_str().unwrap() == "wait" {
+                    sim_time += docs[1][i]["wait"].as_f64().ok_or("Wait time not valid")?;
+                } else {
+                    return Err(String::from(
+                        format!("Not a valid control key at {i}: {hash:?}"),
+                    ));
+                }
+            }
+
+            Alias(alias) => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: {alias:?}"),
+                ))
+            }
+            Null => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: Null"),
+                ))
+            }
+            BadValue => {
+                return Err(String::from(
+                    format!("Not a valid control key at {i}: BadValue"),
+                ))
+            }
         }
     }
-    Ok(
-        Config{ 
-            ambient_temp,
-            max_delta_t,
-            min_delta_t,
-            max_delta_T,
-            sim_time,
-            plot_times,
-        } )
+
+
+    Ok(Config {
+        ambient_temp,
+        max_delta_t,
+        min_delta_t,
+        max_delta_T,
+        sim_time,
+        plot_times,
+    })
 }
-
-
-
-
-
-
-
